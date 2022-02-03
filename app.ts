@@ -262,16 +262,6 @@ app
   .onReachableDevices(reachableDevicesHandler)
   .onExecute(executeHandler)
 
-  // Undocumented in TypeScript
-
-  // Suggested by Googler, seems to work :shrug:
-  // https://github.com/actions-on-google/smart-home-local/issues/1#issuecomment-515706997
-  // @ts-ignore
-  .onProxySelected((req) => {
-    console.log("ProxySelected", req);
-    return createResponse(req, {} as any);
-  })
-
   // @ts-ignore
   .onIndicate((req) => console.log("Indicate", req))
   // @ts-ignore
@@ -290,7 +280,5 @@ app
   .listen()
   .then(() => {
     console.log("Ready!");
-    // Play audio to indicate that receiver is ready to inspect.
-    new Audio("https://www.pacdv.com/sounds/fart-sounds/fart-1.wav").play();
   })
   .catch((e: Error) => console.error(e));
