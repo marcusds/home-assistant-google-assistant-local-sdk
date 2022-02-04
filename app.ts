@@ -255,12 +255,31 @@ const executeHandler = async (
   }
 };
 
-const app = new App("1.0.0");
+const queryHandler = async (
+	request: IntentFlow.QueryRequest
+): Promise<IntentFlow.QueryResponse> => {
+	console.log("QUERY intent:", request);
+
+	try {
+		const device = request.inputs[0].payload.devices[0];
+		const hassCustomData = device.customData as HassCustomDeviceData;
+
+		return await forwardRequest(hassCustomData, device.id, request);
+	} catch (err) {
+		if (err instanceof UnknownInstance) {
+			return createResponse(request, {} as any);
+		}
+		throw err;
+	}
+};
+
+const app = new App("1.1.0");
 
 app
   .onIdentify(identifyHandler)
   .onReachableDevices(reachableDevicesHandler)
   .onExecute(executeHandler)
+	.onQuery(queryHandler)
 
   // @ts-ignore
   .onIndicate((req) => console.log("Indicate", req))
@@ -268,8 +287,6 @@ app
   .onParseNotification((req) => console.log("ParseNotification", req))
   // @ts-ignore
   .onProvision((req) => console.log("Provision", req))
-  // @ts-ignore
-  .onQuery((req) => console.log("Query", req))
   // @ts-ignore
   .onRegister((req) => console.log("Register", req))
   // @ts-ignore
