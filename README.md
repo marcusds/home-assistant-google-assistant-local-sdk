@@ -9,11 +9,10 @@ Implements a small Local SDK receiver that can interact with Home Assistant inst
 
 ## Set up Google dev env
 
-Go to the [Google Actions console](https://console.actions.google.com/):
+Go to the [Google Home Developer Console](https://console.home.google.com/), open your cloud-to-cloud integration and set up local fulfillment:
 
-- Develop (top bar) -> Actions (sidebar) -> Configure local home SDK::
-  - Enter your testing URL for Chrome: `http://<YOUR LOCAL IP>:8080/test_receiver.html`
-  - Enter your testing URL for Node: `http://<YOUR LOCAL IP>:8080/test_receiver.html`
+  - Enter your testing URL for Chrome: `http://<YOUR LOCAL IP>:8081/test_receiver.html`
+  - Enter your testing URL for Node: `http://<YOUR LOCAL IP>:8081/test_receiver.html`
   - Enable "Support local query"
   - Add device scan configuration: "MDNS"
   - MDNS service name: `_home-assistant._tcp.local`
@@ -21,9 +20,12 @@ Go to the [Google Actions console](https://console.actions.google.com/):
 
 ## Local SDK dev env
 
+Requires Node.js 24 (see `.nvmrc`). A devcontainer (`.devcontainer.json`) is also provided.
+
 1. Install dependencies `npm install` (only do it whenever you pull latest code)
 2. Build code `npm run build` to build the code once or run `npm run watch` if you're developing and want to generate a new build whenever you make a change.
-3. Run `npm run server` to allow Google Assistant to load the app
+3. Run `npm run server` to allow Google Assistant to load the app (serves on port 8081)
+4. Run `npm test` to build and run the tests against a mocked Local Home SDK
 
 ## Chrome debugging
 
@@ -39,6 +41,6 @@ Go to the [Google Actions console](https://console.actions.google.com/):
 
 ## Resources
 
-- [Add local execution tutorial](https://developers.google.com/assistant/smarthome/develop/local)
+- [Local fulfillment guide](https://developers.home.google.com/local-home/overview)
 - [Local SDK types](https://github.com/actions-on-google/local-home-sdk)
 - [Sample app](https://github.com/actions-on-google/smart-home-local/tree/master/app)

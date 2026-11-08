@@ -37,6 +37,21 @@ interface HassCustomDeviceData {
 
 const VERSION = "2.1.6";
 
+// Intents that are safe to resend: they don't change device state.
+const IDEMPOTENT_INTENTS: string[] = [
+  Intents.IDENTIFY,
+  Intents.PROXY_SELECTED,
+  Intents.REACHABLE_DEVICES,
+  Intents.QUERY,
+];
+
+// Delay before retrying when HA answers with an empty body (webhook not yet
+// registered, e.g. while HA is starting up).
+const EMPTY_BODY_RETRY_DELAY_MS = 500;
+
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 class RequestResponseHandler<T extends keyof Requests> {
   _deviceManager?: smarthome.DeviceManager;
   haVersion?: string;
@@ -78,7 +93,18 @@ class RequestResponseHandler<T extends keyof Requests> {
     if (this.haVersion) {
       msg += ` (HA/${this.haVersion})`;
     }
-    return new IntentFlow.HandlerError(this.request.requestId, errorCode, msg);
+    const requestId = this.request.requestId;
+    // Prefer the dedicated error classes where the SDK provides one.
+    switch (errorCode) {
+      case ErrorCode.DEVICE_NOT_IDENTIFIED:
+        return new IntentFlow.DeviceNotIdentifiedError(requestId, msg);
+      case ErrorCode.DEVICE_NOT_SUPPORTED:
+        return new IntentFlow.DeviceNotSupportedError(requestId, msg);
+      case ErrorCode.INVALID_REQUEST:
+        return new IntentFlow.InvalidRequestError(requestId, msg);
+      default:
+        return new IntentFlow.HandlerError(requestId, errorCode, msg);
+    }
   }
 
   /** Get Home Assistant info stored in device custom data. */
@@ -159,10 +185,20 @@ class RequestResponseHandler<T extends keyof Requests> {
 
     // this.logMessage("Sending", command);
 
+    const isIdempotent = IDEMPOTENT_INTENTS.includes(this.intent);
+    // Let the platform retry transport failures, but never resend EXECUTE:
+    // relative commands (e.g. brightness +10%) could be applied twice.
+    const sendOptions: smarthome.SendOptions | undefined = isIdempotent
+      ? { retries: 2, delayInMilliseconds: 100 }
+      : undefined;
+
     let rawResponse: HttpResponseData;
 
     try {
-      rawResponse = (await deviceManager.send(command)) as HttpResponseData;
+      rawResponse = (await deviceManager.send(
+        command,
+        sendOptions
+      )) as HttpResponseData;
     } catch (err) {
       this.logError("Error making request", err);
       // Errors coming out of `deviceManager.send` are already Google errors.
@@ -178,15 +214,11 @@ class RequestResponseHandler<T extends keyof Requests> {
       !rawResponse.httpResponse.body
     ) {
       // Retry in case it's because of initialization.
-      if (
-        !isRetry &&
-        [
-          Intents.IDENTIFY,
-          Intents.PROXY_SELECTED,
-          Intents.REACHABLE_DEVICES,
-          Intents.QUERY,
-        ].includes(this.intent)
-      ) {
+      if (!isRetry && isIdempotent) {
+        this.logMessage(
+          `Empty response, retrying in ${EMPTY_BODY_RETRY_DELAY_MS}ms`
+        );
+        await delay(EMPTY_BODY_RETRY_DELAY_MS);
         return await this.forwardRequest(targetDeviceId, true);
       }
       throw this.createError(ErrorCode.GENERIC_ERROR, "Webhook not registered");

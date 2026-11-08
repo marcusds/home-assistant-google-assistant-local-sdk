@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "moduleResolution": "node",
     "strict": true,
     "noImplicitAny": true,
     "noImplicitReturns": true
-  }
+  },
+  "files": ["app.ts"]
 }
