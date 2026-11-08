@@ -35,7 +35,8 @@ interface HassCustomDeviceData {
   uuid?: string;
 }
 
-const VERSION = "2.1.6";
+// Replaced with the package.json version at build time (scripts/set-version.mjs).
+const VERSION = "__VERSION__";
 
 // Intents that are safe to resend: they don't change device state.
 const IDEMPOTENT_INTENTS: string[] = [

@@ -5,6 +5,9 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const APP_JS = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+const { version: VERSION } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8")
+);
 
 const ErrorCode = {
   NOT_SUPPORTED: "NOT_SUPPORTED",
@@ -152,7 +155,7 @@ test("forwards QUERY to the HA webhook with SDK retries", async () => {
   assert.equal(command.path, "/api/webhook/hook123");
   assert.equal(command.port, 8123);
   assert.equal(command.deviceId, "light.kitchen");
-  assert.equal(command.additionalHeaders["HA-Cloud-Version"], "2.1.6");
+  assert.equal(command.additionalHeaders["HA-Cloud-Version"], VERSION);
   assert.deepEqual(JSON.parse(command.data), queryRequest);
   assert.equal(options.retries, 2);
 });

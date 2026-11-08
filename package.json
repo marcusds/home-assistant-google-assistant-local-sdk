@@ -1,10 +1,10 @@
 {
   "name": "home-assistant-google-assistant-local-sdk",
-  "version": "1.0.0",
+  "version": "2.2.0-beta.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/set-version.mjs",
     "watch": "tsc --watch",
     "server": "http-server . -p 8081",
     "test": "npm run build && node --test test/"
